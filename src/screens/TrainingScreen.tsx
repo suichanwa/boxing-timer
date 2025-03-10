@@ -47,6 +47,10 @@ const TrainingScreen = ({ route }) => {
               if (currentRound >= rounds) {
                 // Workout complete
                 setIsRunning(false);
+                // Navigate back to WorkoutSettings after slight delay
+                setTimeout(() => {
+                  navigation.navigate("WorkoutSettings");
+                }, 1000);
                 return 0;
               } else {
                 setCurrentRound(prev => prev + 1);
@@ -81,7 +85,7 @@ const TrainingScreen = ({ route }) => {
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [isRunning, isRest, currentRound, rounds, roundTime, restTime, timeLeft]);
+  }, [isRunning, isRest, currentRound, rounds, roundTime, restTime, timeLeft, navigation]);
 
   // Format time into minutes:seconds
   const formatTime = (seconds) => {
@@ -115,9 +119,9 @@ const TrainingScreen = ({ route }) => {
   };
   
   const handleQuitConfirmed = () => {
-    // User confirmed quitting
+    // User confirmed quitting - navigate to WorkoutSettings instead of Home
     setShowAlert(false);
-    navigation.navigate("Home");
+    navigation.navigate("WorkoutSettings");
   };
   
   const handleContinueWorkout = () => {
@@ -135,8 +139,8 @@ const TrainingScreen = ({ route }) => {
     } else if (isRest) {
       // Skip rest
       if (currentRound >= rounds) {
-        // Workout complete
-        navigation.navigate("Home");
+        // Workout complete - navigate to WorkoutSettings instead of Home
+        navigation.navigate("WorkoutSettings");
       } else {
         setCurrentRound(prev => prev + 1);
         setIsRest(false);
