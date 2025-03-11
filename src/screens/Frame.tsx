@@ -3,9 +3,11 @@ import { StyleSheet, Text, View, TouchableOpacity, Animated } from "react-native
 import { Image } from "expo-image";
 import { useNavigation } from "@react-navigation/native";
 import { FontFamily, FontSize, Color, Gap, Padding, BorderRadius } from "../../styles/GlobalStyles";
+import { useTheme } from "../hooks/useTheme";
 
 const Frame = () => {
   const navigation = useNavigation();
+  const { colors } = useTheme();
   
   // Create animated value for button position (starts off-screen)
   const buttonPosition = useRef(new Animated.Value(900)).current;
@@ -13,49 +15,48 @@ const Frame = () => {
   // Animation for button floating up
   useEffect(() => {
     Animated.spring(buttonPosition, {
-      toValue: 656, // Final position (same as in original style)
-      tension: 50,  // Controls springiness
-      friction: 7,  // Controls speed/bounce
-      useNativeDriver: false // Layout animation requires JS driver
+      toValue: 656, 
+      tension: 50,
+      friction: 7,
+      useNativeDriver: false
     }).start();
   }, []);
 
   return (
-    <View style={styles.view}>
+    <View style={[styles.view, { backgroundColor: colors.background }]}>
       <Animated.View 
         style={[
           styles.btnParent, 
           styles.btnParentPosition,
-          { top: buttonPosition } // Apply animated position
+          { top: buttonPosition }
         ]}
       >
         <TouchableOpacity 
-          style={styles.btn}
+          style={[styles.btn, { backgroundColor: colors.primary }]}
           onPress={() => navigation.navigate("WorkoutSettings")}
         >
-          <Text style={styles.addNote}>Continue</Text>
+          <Text style={[styles.addNote, { color: colors.textInverted }]}>Continue</Text>
         </TouchableOpacity>
         
         <View style={styles.poweredByParent}>
-          <Text style={styles.poweredBy}>{`Powered by `}</Text>
+          <Text style={[styles.poweredBy, { color: colors.textPrimary }]}>{`Powered by `}</Text>
           <Image
             style={styles.logoIcon}
-            contentFit="cover"
-            source={require("../../assets/logo.png")}
+            contentFit="contain"
+            source={require("../../assets/WWA logo.svg")}
           />
         </View>
       </Animated.View>
 
-      {/* Bottom tabs - currently set to opacity 0.01 as in your design */}
       <View style={styles.bottomTabBarWithLabels}>
         <View style={styles.tabs}>
           <View style={styles.tab1}>
             <Image
               style={styles.icon}
               contentFit="cover"
-              source={require("../../assets/icon.png")}
+              source={require("../../assets/logo.png")}
             />
-            <Text style={styles.notes}>Notes</Text>
+            <Text style={[styles.notes, { color: colors.active }]}>Notes</Text>
           </View>
           <View style={styles.tab1}>
             <Text style={styles.archive}>To-Dos</Text>
@@ -68,14 +69,13 @@ const Frame = () => {
           </View>
         </View>
         <View style={styles.gestureIndicatorBar}>
-          <View style={styles.rectangle} />
+          <View style={[styles.rectangle, { backgroundColor: colors.divider }]} />
         </View>
       </View>
 
-      {/* Logo in center */}
       <Image
         style={styles.logoIcon1}
-        contentFit="cover"
+        contentFit="contain"
         source={require("../../assets/logo.png")}
       />
     </View>
@@ -145,8 +145,8 @@ const styles = StyleSheet.create({
     fontSize: FontSize.large,
   },
   logoIcon: {
-    width: 28,
-    height: 14,
+    width: 40, // Adjusted size for SVG logo
+    height: 20, // Adjusted size for SVG logo
   },
   bottomTabBarWithLabels: {
     bottom: 0,

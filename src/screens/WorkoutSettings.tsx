@@ -1,12 +1,24 @@
-import React, { useState } from "react";
-import { Text, StyleSheet, View, TouchableOpacity, SafeAreaView, ScrollView, Alert } from "react-native";
+import React, { useState, useEffect, useRef } from "react";
+import { Text, StyleSheet, View, TouchableOpacity, SafeAreaView, ScrollView, Alert, Animated } from "react-native";
 import { Image } from "expo-image";
+import { Audio } from "expo-av";
 import { useNavigation } from "@react-navigation/native";
 import { FontFamily, FontSize, Color, Padding, Gap, Border } from "../../styles/GlobalStyles";
 import PremiumBlock from "../../components/PremiumBlock";
 
+// Import theme hook
+import { useTheme } from "../hooks/useTheme";
+
 const WorkoutSettings = () => {
   const navigation = useNavigation();
+  const [sound, setSound] = useState();
+  
+  // Get theme context
+  const { colors, isDark } = useTheme();
+  
+  // Animation values
+  const settingsButtonScale = useRef(new Animated.Value(1)).current;
+  const settingsButtonRotate = useRef(new Animated.Value(0)).current;
   
   // Workout settings state
   const [rounds, setRounds] = useState(3);
@@ -25,23 +37,96 @@ const WorkoutSettings = () => {
     ? `${totalHours}h ${totalMinutes}m`
     : `${totalMinutes} Minutes`;
   
+  // Load sound
+  async function loadSound() {
+    try {
+      const { sound } = await Audio.Sound.createAsync(require("../../assets/sounds/dingdongsond.mp3"));
+      setSound(sound);
+    } catch (error) {
+      console.log('Error loading sound', error);
+    }
+  }
+  
+  // Play sound
+  async function playSound() {
+    try {
+      if (sound) {
+        await sound.replayAsync();
+      } else {
+        // If sound isn't loaded yet, load and play
+        const { sound: newSound } = await Audio.Sound.createAsync(require("../../assets/sounds/dingdongsond.mp3"));
+        await newSound.playAsync();
+      }
+    } catch (error) {
+      console.log('Error playing sound', error);
+    }
+  }
+  
+  // Load sound on component mount
+  useEffect(() => {
+    loadSound();
+    
+    // Cleanup function to unload sound when component unmounts
+    return () => {
+      if (sound) {
+        sound.unloadAsync();
+      }
+    };
+  }, []);
+  
   // Handle adjustment of values
   const adjustValue = (setter, currentValue, increment) => {
     setter(Math.max(1, currentValue + increment));
   };
   
   // Handle starting the workout
-  const startWorkout = () => {
-    navigation.navigate("Training", {
-      roundTime: roundDuration * 60,
-      restTime: restDuration * 60,
-      rounds: rounds,
-    });
+  const startWorkout = async () => {
+    // Play sound before navigating
+    await playSound();
+    
+    // Navigate after a slight delay to ensure sound plays
+    setTimeout(() => {
+      navigation.navigate("Training", {
+        roundTime: roundDuration * 60,
+        restTime: restDuration * 60,
+        rounds: rounds,
+      });
+    }, 300);
   };
 
-  // Navigate to settings page
+  // Navigate to settings page with animation
   const navigateToSettings = () => {
-    navigation.navigate("Settings");
+    // Play button animation
+    Animated.sequence([
+      Animated.parallel([
+        // Scale down slightly
+        Animated.timing(settingsButtonScale, {
+          toValue: 0.8,
+          duration: 100,
+          useNativeDriver: true,
+        }),
+        // Rotate
+        Animated.timing(settingsButtonRotate, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]),
+      // Scale back up
+      Animated.timing(settingsButtonScale, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      // Navigate after animation completes
+      navigation.navigate("Settings");
+      
+      // Reset rotation after navigation
+      setTimeout(() => {
+        settingsButtonRotate.setValue(0);
+      }, 500);
+    });
   };
 
   // Handle premium purchase
@@ -55,24 +140,37 @@ const WorkoutSettings = () => {
       ]
     );
   };
+  
+  // Convert rotation value to degrees for transform
+  const spin = settingsButtonRotate.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '180deg']
+  });
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollViewContent}>
         {/* Header */}
-        <View style={styles.header}>
-          {/* Settings icon instead of back arrow */}
-          <TouchableOpacity 
-            style={styles.settingsButton}
-            onPress={navigateToSettings}
-          >
-            <Image
-              style={styles.settingsIcon}
-              contentFit="contain"
-              source={require("../../assets/settings.svg")}
-            />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Workout Settings</Text>
+        <View style={[styles.header, { borderBottomColor: colors.divider }]}>
+          {/* Settings icon with animation */}
+          <Animated.View style={{
+            transform: [
+              { scale: settingsButtonScale },
+              { rotate: spin }
+            ]
+          }}>
+            <TouchableOpacity 
+              style={styles.settingsButton}
+              onPress={navigateToSettings}
+            >
+              <Image
+                style={[styles.settingIcon, { tintColor: colors.textPrimary }]}
+                contentFit="contain"
+                source={require("../../assets/settings.svg")}
+              />
+            </TouchableOpacity>
+          </Animated.View>
+          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Workout Settings</Text>
           <View style={styles.placeholder} />
         </View>
         
@@ -89,146 +187,151 @@ const WorkoutSettings = () => {
         {/* Main content */}
         <View style={styles.content}>
           {/* Total Training Length */}
-          <View style={styles.taskManagementTableCellTod}>
+          <View style={[styles.taskManagementTableCellTod, { backgroundColor: colors.surfaceVariant }]}>
             <View style={styles.tableCell}>
               <View style={styles.labelsChevron}>
                 <View style={styles.labels}>
                   <View style={styles.row1}>
                     <Text 
-                      style={styles.totalTrainingLength}
+                      style={[styles.totalTrainingLength, { color: colors.textPrimary }]}
                       numberOfLines={2}
                     >
                       Total Training Length
                     </Text>
                     <Text
-                      style={styles.minutes}
+                      style={[styles.minutes, { color: colors.textSecondary }]}
                       numberOfLines={2}
                     >
                       {formattedTotalTime}
                     </Text>
                   </View>
                 </View>
-                <View style={styles.divider} />
+                <View style={[styles.divider, { backgroundColor: colors.border }]} />
               </View>
             </View>
           </View>
         
           {/* Number of Rounds setting */}
-          <View style={styles.settingRow}>
+          <View style={[styles.settingRow, { borderBottomColor: colors.border }]}>
             <View style={styles.settingLabelContainer}>
               <Image 
-                style={styles.settingIcon}
+                style={[styles.settingIcon, { tintColor: colors.textPrimary, marginRight: 12 }]}
                 contentFit="contain"
                 source={require("../../assets/rounds.svg")}
               />
-              <Text style={styles.settingLabel}>Number of Rounds</Text>
+              <Text style={[styles.settingLabel, { color: colors.textPrimary }]}>Number of Rounds</Text>
             </View>
             <View style={styles.adjustmentControls}>
               <TouchableOpacity 
-                style={styles.adjustButton}
+                style={[styles.adjustButton, { backgroundColor: colors.surfaceVariant }]}
                 onPress={() => adjustValue(setRounds, rounds, -1)}
               >
-                <Text style={styles.adjustButtonText}>-</Text>
+                <Text style={[styles.adjustButtonText, { color: colors.active }]}>-</Text>
               </TouchableOpacity>
-              <Text style={styles.valueText}>{rounds}</Text>
+              <Text style={[styles.valueText, { color: colors.textPrimary }]}>{rounds}</Text>
               <TouchableOpacity 
-                style={styles.adjustButton}
+                style={[styles.adjustButton, { backgroundColor: colors.surfaceVariant }]}
                 onPress={() => adjustValue(setRounds, rounds, 1)}
               >
-                <Text style={styles.adjustButtonText}>+</Text>
+                <Text style={[styles.adjustButtonText, { color: colors.active }]}>+</Text>
               </TouchableOpacity>
             </View>
           </View>
           
           {/* Round Duration setting */}
-          <View style={styles.settingRow}>
+          <View style={[styles.settingRow, { borderBottomColor: colors.border }]}>
             <View style={styles.settingLabelContainer}>
               <Image 
-                style={styles.settingIcon}
+                style={[styles.settingIcon, { tintColor: colors.textPrimary, marginRight: 12 }]}
                 contentFit="contain"
                 source={require("../../assets/fight.svg")}
               />
-              <Text style={styles.settingLabel}>Round Duration (min)</Text>
+              <Text style={[styles.settingLabel, { color: colors.textPrimary }]}>Round Duration (min)</Text>
             </View>
             <View style={styles.adjustmentControls}>
               <TouchableOpacity 
-                style={styles.adjustButton}
+                style={[styles.adjustButton, { backgroundColor: colors.surfaceVariant }]}
                 onPress={() => adjustValue(setRoundDuration, roundDuration, -1)}
               >
-                <Text style={styles.adjustButtonText}>-</Text>
+                <Text style={[styles.adjustButtonText, { color: colors.active }]}>-</Text>
               </TouchableOpacity>
-              <Text style={styles.valueText}>{roundDuration}</Text>
+              <Text style={[styles.valueText, { color: colors.textPrimary }]}>{roundDuration}</Text>
               <TouchableOpacity 
-                style={styles.adjustButton}
+                style={[styles.adjustButton, { backgroundColor: colors.surfaceVariant }]}
                 onPress={() => adjustValue(setRoundDuration, roundDuration, 1)}
               >
-                <Text style={styles.adjustButtonText}>+</Text>
+                <Text style={[styles.adjustButtonText, { color: colors.active }]}>+</Text>
               </TouchableOpacity>
             </View>
           </View>
           
           {/* Rest Duration setting */}
-          <View style={styles.settingRow}>
+          <View style={[styles.settingRow, { borderBottomColor: colors.border }]}>
             <View style={styles.settingLabelContainer}>
               <Image 
-                style={styles.settingIcon}
+                style={[styles.settingIcon, { tintColor: colors.textPrimary, marginRight: 12 }]}
                 contentFit="contain"
                 source={require("../../assets/rest.svg")}
               />
-              <Text style={styles.settingLabel}>Rest Duration (min)</Text>
+              <Text style={[styles.settingLabel, { color: colors.textPrimary }]}>Rest Duration (min)</Text>
             </View>
             <View style={styles.adjustmentControls}>
               <TouchableOpacity 
-                style={styles.adjustButton}
+                style={[styles.adjustButton, { backgroundColor: colors.surfaceVariant }]}
                 onPress={() => adjustValue(setRestDuration, restDuration, -1)}
               >
-                <Text style={styles.adjustButtonText}>-</Text>
+                <Text style={[styles.adjustButtonText, { color: colors.active }]}>-</Text>
               </TouchableOpacity>
-              <Text style={styles.valueText}>{restDuration}</Text>
+              <Text style={[styles.valueText, { color: colors.textPrimary }]}>{restDuration}</Text>
               <TouchableOpacity 
-                style={styles.adjustButton}
+                style={[styles.adjustButton, { backgroundColor: colors.surfaceVariant }]}
                 onPress={() => adjustValue(setRestDuration, restDuration, 1)}
               >
-                <Text style={styles.adjustButtonText}>+</Text>
+                <Text style={[styles.adjustButtonText, { color: colors.active }]}>+</Text>
               </TouchableOpacity>
             </View>
           </View>
           
           {/* Warm-up Duration setting */}
-          <View style={styles.settingRow}>
+          <View style={[styles.settingRow, { borderBottomColor: colors.border }]}>
             <View style={styles.settingLabelContainer}>
               <Image 
-                style={styles.settingIcon}
+                style={[styles.settingIcon, { tintColor: colors.textPrimary, marginRight: 12 }]}
                 contentFit="contain"
                 source={require("../../assets/rounds.svg")} // Using rounds icon as fallback for warmup
               />
-              <Text style={styles.settingLabel}>Warm-up Duration (sec)</Text>
+              <Text style={[styles.settingLabel, { color: colors.textPrimary }]}>Warm-up Duration (sec)</Text>
             </View>
             <View style={styles.adjustmentControls}>
               <TouchableOpacity 
-                style={styles.adjustButton}
+                style={[styles.adjustButton, { backgroundColor: colors.surfaceVariant }]}
                 onPress={() => adjustValue(setWarmupDuration, warmupDuration, -5)}
               >
-                <Text style={styles.adjustButtonText}>-</Text>
+                <Text style={[styles.adjustButtonText, { color: colors.active }]}>-</Text>
               </TouchableOpacity>
-              <Text style={styles.valueText}>{warmupDuration}</Text>
+              <Text style={[styles.valueText, { color: colors.textPrimary }]}>{warmupDuration}</Text>
               <TouchableOpacity 
-                style={styles.adjustButton}
+                style={[styles.adjustButton, { backgroundColor: colors.surfaceVariant }]}
                 onPress={() => adjustValue(setWarmupDuration, warmupDuration, 5)}
               >
-                <Text style={styles.adjustButtonText}>+</Text>
+                <Text style={[styles.adjustButtonText, { color: colors.active }]}>+</Text>
               </TouchableOpacity>
             </View>
           </View>
           
           {/* Play Button Design */}
           <View style={styles.btn}>
-            <View style={styles.btnChild} />
+            <View style={[styles.btnChild, { borderColor: colors.active }]} />
             <TouchableOpacity 
-              style={styles.button}
+              style={[styles.button, { backgroundColor: colors.surfaceVariant }]}
               onPress={startWorkout}
             >
-              <View style={styles.playArrowIcon} />
+              <View style={[styles.playArrowIcon, { 
+                borderLeftColor: colors.active,
+                borderRightColor: "transparent",
+                borderBottomColor: "transparent",
+                borderTopColor: "transparent"
+              }]} />
             </TouchableOpacity>
           </View>
         </View>
@@ -240,7 +343,6 @@ const WorkoutSettings = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Color.neutral100,
   },
   scrollView: {
     flex: 1,
@@ -255,7 +357,6 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderBottomColor: Color.orangeDarkTextHeading,
   },
   premiumBlockContainer: {
     paddingHorizontal: 16,
@@ -272,14 +373,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  settingsIcon: {
+  settingIcon: {
     width: 24,
     height: 24,
   },
   headerTitle: {
     fontSize: FontSize.screenHeader_size,
     fontFamily: FontFamily.h3,
-    color: Color.colorBlack,
     textAlign: 'center',
   },
   placeholder: {
@@ -291,7 +391,6 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   taskManagementTableCellTod: {
-    backgroundColor: Color.colorGhostwhite,
     width: "100%",
     marginBottom: 16,
   },
@@ -327,7 +426,6 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     fontWeight: "600",
     fontFamily: FontFamily.h3,
-    color: Color.colorBlack,
     overflow: "hidden",
     textAlign: "left",
     flex: 1,
@@ -336,7 +434,6 @@ const styles = StyleSheet.create({
     fontSize: FontSize.screenHeader_size,
     lineHeight: 23,
     fontFamily: FontFamily.dMSansRegular,
-    color: Color.colorGray_100,
     overflow: "hidden",
     textAlign: "right",
   },
@@ -345,7 +442,6 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     left: 0,
-    backgroundColor: Color.colorGray_200,
     height: 1,
     zIndex: 1,
   },
@@ -355,7 +451,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: Color.colorGhostwhite,
     width: '100%',
     paddingHorizontal: 16,
   },
@@ -364,16 +459,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
   },
-  settingIcon: {
-    width: 24,
-    height: 24,
-    marginRight: 12,
-    tintColor: Color.colorBlack,
-  },
   settingLabel: {
     fontSize: FontSize.body_size,
     fontFamily: FontFamily.body,
-    color: Color.colorBlack,
   },
   adjustmentControls: {
     flexDirection: 'row',
@@ -383,19 +471,16 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: Color.colorGhostwhite,
     justifyContent: 'center',
     alignItems: 'center',
   },
   adjustButtonText: {
     fontSize: 20,
     fontFamily: FontFamily.h3,
-    color: Color.primaryColor1,
   },
   valueText: {
     fontSize: FontSize.body_size,
     fontFamily: FontFamily.h3,
-    color: Color.colorBlack,
     marginHorizontal: 16,
     minWidth: 20,
     textAlign: 'center',
@@ -417,7 +502,6 @@ const styles = StyleSheet.create({
     height: 111,
     borderRadius: 55.5,
     borderWidth: 2,
-    borderColor: Color.primaryColor1,
     borderStyle: 'dashed',
   },
   button: {
@@ -425,7 +509,6 @@ const styles = StyleSheet.create({
     top: 8,
     left: "50%",
     borderRadius: 48,
-    backgroundColor: Color.colorGhostwhite,
     width: 96,
     height: 96,
     flexDirection: "row",
@@ -433,7 +516,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     overflow: "hidden",
     position: "absolute",
-    shadowColor: Color.colorBlack,
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -448,10 +531,6 @@ const styles = StyleSheet.create({
     borderRightWidth: 0,
     borderBottomWidth: 16,
     borderTopWidth: 16,
-    borderLeftColor: Color.primaryColor1,
-    borderRightColor: "transparent",
-    borderBottomColor: "transparent",
-    borderTopColor: "transparent",
     marginLeft: 5,
   }
 });

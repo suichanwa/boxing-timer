@@ -1,90 +1,298 @@
-import React, { useState } from "react";
-import { StyleSheet, View, Text, TouchableOpacity, SafeAreaView, ScrollView } from "react-native";
-import { useNavigation } from "@react-navigation/native";
-import { FontFamily, FontSize, Color, Padding, Gap, BorderRadius } from "../../styles/GlobalStyles";
+import React, { useState, useEffect } from "react";
+import { StyleSheet, View, Text, TouchableOpacity, SafeAreaView, ScrollView, Animated } from "react-native";
+import { Image } from "expo-image";
+import { useNavigation, useRoute } from "@react-navigation/native";
+import { FontFamily, FontSize, Padding, Gap } from "../../styles/GlobalStyles";
 import PremiumBlock from "../../components/PremiumBlock";
 import Toggle from "../../components/Toggle";
+import { MaterialIcons } from '@expo/vector-icons';
 
+// Import theme hook
+import { useTheme } from "../hooks/useTheme";
+
+import { useScreenAnimation } from "../hooks/useScreenAnimation";
+import { useStaggeredItems } from "../hooks/useStaggeredItems";
+import { useButtonAnimation } from "../hooks/useButtonAnimation";
+
+const SettingsHeader = ({ onBackPress, colors }) => {
+  const { scale, rotation, animateThenRun } = useButtonAnimation(-30);
+
+  const handleBackPress = () => {
+    animateThenRun(onBackPress);
+  };
+
+  return (
+    <View style={[styles.header, { borderBottomColor: colors.divider }]}>
+      <Animated.View style={{
+        transform: [
+          { scale },
+          { rotate: rotation }
+        ]
+      }}>
+        <TouchableOpacity 
+          style={styles.backButton}
+          onPress={handleBackPress}
+        >
+          <View style={styles.arrowBack}>
+            <View style={[styles.arrowLine, { backgroundColor: colors.active }]} />
+            <View style={[styles.arrowHead, { borderColor: colors.active }]} />
+          </View>
+        </TouchableOpacity>
+      </Animated.View>
+      <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Settings</Text>
+      <View style={styles.placeholder} />
+    </View>
+  );
+};
+
+const SettingItem = ({ label, description, value, onValueChange, animStyle, colors, icon }) => {
+  return (
+    <Animated.View style={[
+      styles.settingRow, 
+      animStyle, 
+      { borderBottomColor: colors.border }
+    ]}>
+      <View style={styles.settingLabelContainer}>
+        {icon && (
+          <View style={styles.iconContainer}>
+            {icon}
+          </View>
+        )}
+        <View style={styles.settingTextContainer}>
+          <Text style={[styles.settingLabel, { color: colors.textPrimary }]}>{label}</Text>
+          <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>{description}</Text>
+        </View>
+      </View>
+      <Toggle 
+        value={value}
+        onValueChange={onValueChange}
+      />
+    </Animated.View>
+  );
+};
+
+const LanguageSelector = ({ label, description, selectedLanguage, onPress, animStyle, colors, icon }) => {
+  return (
+    <Animated.View style={[
+      styles.settingRow, 
+      animStyle, 
+      { borderBottomColor: colors.border }
+    ]}>
+      <View style={styles.settingLabelContainer}>
+        {icon && (
+          <View style={styles.iconContainer}>
+            {icon}
+          </View>
+        )}
+        <View style={styles.settingTextContainer}>
+          <Text style={[styles.settingLabel, { color: colors.textPrimary }]}>{label}</Text>
+          <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>{description}</Text>
+        </View>
+      </View>
+      <TouchableOpacity 
+        style={styles.languageSelector}
+        onPress={onPress}
+      >
+        <Text style={[styles.languageText, { color: colors.textPrimary }]}>{selectedLanguage}</Text>
+        <MaterialIcons name="arrow-forward-ios" size={14} color={colors.textSecondary} />
+      </TouchableOpacity>
+    </Animated.View>
+  );
+};
+
+const PremiumBanner = ({ onPress, animStyle, colors }) => {
+  return (
+    <Animated.View style={[styles.premiumBlockContainer, animStyle]}>
+      <PremiumBlock 
+        onPress={onPress}
+        message="Get rid of the annoying ads!"
+        price="For 0.99 USD"
+      />
+    </Animated.View>
+  );
+};
+
+// Language code to display name mapping
+const languageNames = {
+  'en': 'English',
+  'es': 'Spanish',
+  'fr': 'French',
+  'de': 'German',
+  'it': 'Italian',
+  'pt': 'Portuguese',
+  'ru': 'Russian',
+  'zh': 'Chinese',
+  'ar': 'Arabic',
+  'bn': 'Bengali',
+  'ja': 'Japanese',
+  'ur': 'Urdu',
+  'hi': 'Hindi',
+};
+
+// =====================================
+// Main Component
+// =====================================
 const SettingsScreen = () => {
   const navigation = useNavigation();
+  const route = useRoute();
+  
+  // Get theme context
+  const { colors, isDark, toggleTheme } = useTheme();
   
   // Settings state
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [vibrationEnabled, setVibrationEnabled] = useState(true);
+  const [rotationEnabled, setRotationEnabled] = useState(false);
+  const [languageCode, setLanguageCode] = useState("en");
   
-  // Handle premium purchase
+  const { opacity, translateY, animateOut } = useScreenAnimation();
+  
+  // Now we need 6 items for animation (including new options)
+  const { itemsAnimatedStyles, resetItemAnimations } = useStaggeredItems(6);
+  
+  // Handle language selection from LanguageScreen
+  useEffect(() => {
+    if (route.params?.selectedLanguage) {
+      setLanguageCode(route.params.selectedLanguage);
+    }
+  }, [route.params?.selectedLanguage]);
+  
+  const handleBack = () => {
+    animateOut(() => {
+      navigation.goBack();
+    });
+  };
+  
   const handlePremiumPurchase = () => {
-    // Implementation would connect to in-app purchase system
     console.log("Premium purchase initiated");
   };
 
-  // Handle back navigation
-  const handleBack = () => {
-    navigation.goBack();
+  const handleLanguagePress = () => {
+    navigation.navigate("Language", { currentLanguage: languageCode });
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity 
-            style={styles.backButton}
-            onPress={handleBack}
-          >
-            <View style={styles.arrowBack}>
-              <View style={styles.arrowLine} />
-              <View style={styles.arrowHead} />
-            </View>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Settings</Text>
-          <View style={styles.placeholder} />
-        </View>
-        
-        {/* Settings Section */}
-        <View style={styles.settingsSection}>
-          {/* Sound Setting */}
-          <View style={styles.settingRow}>
-            <View style={styles.settingTextContainer}>
-              <Text style={styles.settingLabel}>Sound</Text>
-              <Text style={styles.settingDescription}>Play sounds for timer events</Text>
-            </View>
-            <Toggle 
+    <Animated.View 
+      style={[
+        styles.container,
+        {
+          opacity,
+          transform: [{ translateY }],
+          backgroundColor: colors.background
+        }
+      ]}
+    >
+      <SafeAreaView style={styles.safeArea}>
+        <ScrollView style={styles.scrollView}>
+          {/* Header */}
+          <SettingsHeader onBackPress={handleBack} colors={colors} />
+          
+          {/* Settings Section */}
+          <View style={styles.settingsSection}>
+            {/* Sound Setting */}
+            <SettingItem 
+              label="Sound"
+              description="Play sounds for timer events"
               value={soundEnabled}
               onValueChange={setSoundEnabled}
+              animStyle={itemsAnimatedStyles[0]}
+              colors={colors}
+              icon={
+                <MaterialIcons 
+                  name="volume-up" 
+                  size={24} 
+                  color={colors.textPrimary} 
+                />
+              }
+            />
+            
+            {/* Vibration Setting */}
+            <SettingItem 
+              label="Vibration"
+              description="Vibrate on timer events"
+              value={vibrationEnabled}
+              onValueChange={setVibrationEnabled}
+              animStyle={itemsAnimatedStyles[1]}
+              colors={colors}
+              icon={
+                <MaterialIcons 
+                  name="vibration" 
+                  size={24} 
+                  color={colors.textPrimary} 
+                />
+              }
+            />
+            
+            {/* Screen Rotation Setting */}
+            <SettingItem 
+              label="Screen Rotation"
+              description="Allow app to rotate with device"
+              value={rotationEnabled}
+              onValueChange={setRotationEnabled}
+              animStyle={itemsAnimatedStyles[2]}
+              colors={colors}
+              icon={
+                <MaterialIcons 
+                  name="screen-rotation" 
+                  size={24} 
+                  color={colors.textPrimary} 
+                />
+              }
+            />
+            
+            {/* Language Setting */}
+            <LanguageSelector 
+              label="Language"
+              description="Choose your preferred language"
+              selectedLanguage={languageNames[languageCode] || 'English'}
+              onPress={handleLanguagePress}
+              animStyle={itemsAnimatedStyles[3]}
+              colors={colors}
+              icon={
+                <MaterialIcons 
+                  name="language" 
+                  size={24} 
+                  color={colors.textPrimary} 
+                />
+              }
+            />
+            
+            {/* App Theme Setting */}
+            <SettingItem 
+              label="Dark Theme"
+              description="Switch between light and dark mode"
+              value={isDark}
+              onValueChange={toggleTheme}
+              animStyle={itemsAnimatedStyles[4]}
+              colors={colors}
+              icon={
+                <MaterialIcons 
+                  name={isDark ? "dark-mode" : "light-mode"} 
+                  size={24} 
+                  color={colors.textPrimary} 
+                />
+              }
             />
           </View>
           
-          {/* Vibration Setting */}
-          <View style={styles.settingRow}>
-            <View style={styles.settingTextContainer}>
-              <Text style={styles.settingLabel}>Vibration</Text>
-              <Text style={styles.settingDescription}>Vibrate on timer events</Text>
-            </View>
-            <Toggle 
-              value={vibrationEnabled}
-              onValueChange={setVibrationEnabled}
-            />
-          </View>
-        </View>
-        
-        {/* Premium Block - moved under settings labels */}
-        <View style={styles.premiumBlockContainer}>
-          <PremiumBlock 
-            onPress={handlePremiumPurchase}
-            message="Get rid of the annoying ads!"
-            price="For 0.99 USD"
+          {/* Premium Block */}
+          <PremiumBanner 
+            onPress={handlePremiumPurchase} 
+            animStyle={itemsAnimatedStyles[5]} 
+            colors={colors}
           />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+        </ScrollView>
+      </SafeAreaView>
+    </Animated.View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Color.white,
+  },
+  safeArea: {
+    flex: 1,
   },
   scrollView: {
     flex: 1,
@@ -96,7 +304,6 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderBottomColor: Color.background,
   },
   backButton: {
     width: 40,
@@ -113,7 +320,6 @@ const styles = StyleSheet.create({
   arrowLine: {
     width: 18,
     height: 2,
-    backgroundColor: Color.active,
     position: 'absolute',
     left: 2,
   },
@@ -122,7 +328,6 @@ const styles = StyleSheet.create({
     height: 10,
     borderLeftWidth: 2,
     borderBottomWidth: 2,
-    borderColor: Color.active,
     transform: [{ rotate: '45deg' }],
     position: 'absolute',
     left: 2,
@@ -130,7 +335,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: FontSize.large,
     fontFamily: FontFamily.semiBold,
-    color: Color.textPrimary,
     textAlign: 'center',
   },
   placeholder: {
@@ -152,7 +356,18 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: Color.colorGhostwhite,
+  },
+  settingLabelContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  iconContainer: {
+    marginRight: 12,
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   settingTextContainer: {
     flex: 1,
@@ -160,13 +375,27 @@ const styles = StyleSheet.create({
   settingLabel: {
     fontSize: FontSize.medium,
     fontFamily: FontFamily.body,
-    color: Color.textPrimary,
     marginBottom: 4,
   },
   settingDescription: {
     fontSize: FontSize.small,
     fontFamily: FontFamily.regular,
-    color: Color.textSecondary,
+  },
+  settingIcon: {
+    width: 24,
+    height: 24,
+  },
+  // Language selector styles
+  languageSelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 2,
+    paddingHorizontal: 10,
+  },
+  languageText: {
+    fontSize: FontSize.medium,
+    fontFamily: FontFamily.body,
+    marginRight: 4,
   },
 });
 
