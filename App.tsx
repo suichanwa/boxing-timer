@@ -13,6 +13,8 @@ import HomeScreen from "./src/screens/HomeScreen";
 import TrainingScreen from "./src/screens/TrainingScreen";
 import WorkoutSettings from "./src/screens/WorkoutSettings";
 import SettingsScreen from "./src/screens/SettingsScreen";
+// Ensure this import path is correct
+import LanguageScreen from "./src/screens/LanguageScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -27,7 +29,10 @@ const ThemedApp = () => {
     <>
       <NavigationContainer>
         {hideSplashScreen ? (
-          <Stack.Navigator screenOptions={{ headerShown: false }}>
+          <Stack.Navigator 
+            screenOptions={{ headerShown: false }}
+            initialRouteName="Frame"
+          >
             {/* Start with Frame as the initial screen */}
             <Stack.Screen
               name="Frame"
@@ -44,6 +49,12 @@ const ThemedApp = () => {
             <Stack.Screen
               name="Settings"
               component={SettingsScreen}
+              options={{ headerShown: false }}
+            />
+            {/* Language selection screen - ensure name is exactly "Language" */}
+            <Stack.Screen
+              name="Language"
+              component={LanguageScreen}
               options={{ headerShown: false }}
             />
             {/* Timer settings screen */}
@@ -68,6 +79,8 @@ const ThemedApp = () => {
   );
 };
 
+// Make sure to verify that the LanguageScreen component exists
+// and is properly exported from its file
 export default function App() {
   const [fontsLoaded, error] = useFonts({
     "PublicSans-Medium": require("./assets/fonts/PublicSans-Medium.ttf"),

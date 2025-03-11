@@ -10,20 +10,13 @@ import {
   StatusBar
 } from "react-native";
 import { MaterialIcons } from '@expo/vector-icons';
-import { useNavigation } from "@react-navigation/native";
-import { FontFamily, FontSize, Gap, Padding } from "../../styles/GlobalStyles";
+import { useNavigation, useRoute } from "@react-navigation/native";
+import { FontFamily, FontSize, Padding } from "../../styles/GlobalStyles";
 import { useTheme } from "../hooks/useTheme";
 import { useScreenAnimation } from "../hooks/useScreenAnimation";
 
-// Interface for languages
-interface Language {
-  code: string;
-  nativeName: string;
-  englishName: string;
-}
-
 // Languages list with native names and English translations
-const languages: Language[] = [
+const languages = [
   { code: 'en', nativeName: 'English', englishName: 'English' },
   { code: 'es', nativeName: 'Español', englishName: 'Spanish' },
   { code: 'pt', nativeName: 'Português', englishName: 'Portuguese' },
@@ -39,8 +32,9 @@ const languages: Language[] = [
   { code: 'it', nativeName: 'Italiano', englishName: 'Italian' },
 ];
 
-const LanguageScreen = ({ route }) => {
+const LanguageScreen = () => {
   const navigation = useNavigation();
+  const route = useRoute();
   const { colors, isDark } = useTheme();
   const { opacity, translateY, animateOut } = useScreenAnimation();
   
