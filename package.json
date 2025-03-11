@@ -6,7 +6,20 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "dev": "expo start --dev-client",
+    "dev:android": "expo start --dev-client --android",
+    "dev:ios": "expo start --dev-client --ios",
+    "dev:clear": "expo start --dev-client --clear",
+    "dev:android:clear": "expo start --dev-client --android --clear",
+    "dev:ios:clear": "expo start --dev-client --ios --clear",
+    "clean": "watchman watch-del-all && rm -rf node_modules && npm install && npx expo start --clear",
+    "build:android": "eas build --platform android --profile development",
+    "build:android:local": "eas build --platform android --profile development --local",
+    "build:preview": "eas build --platform android --profile preview",
+    "build:prod": "eas build --platform android --profile production",
+    "prebuild": "expo prebuild",
+    "install:dev": "eas build:run -p android"
   },
   "dependencies": {
     "@expo-google-fonts/inter": "^0.2.3",

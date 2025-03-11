@@ -1,135 +1,248 @@
-import React from "react";
-import { Text, StyleSheet, View, TouchableOpacity, Modal } from "react-native";
-import { Color, FontFamily, FontSize, Gap } from "../styles/GlobalStyles";
+import React, { useRef, useEffect } from "react";
+import { 
+  Text, 
+  StyleSheet, 
+  View, 
+  TouchableOpacity, 
+  Modal, 
+  Animated,
+  Easing,
+  Dimensions
+} from "react-native";
+import { FontFamily, FontSize, Gap } from "../styles/GlobalStyles";
 
 interface AlertProps {
   onContinue: () => void;
   onQuit: () => void;
+  colors: any; // Theme colors
 }
 
-const Alert: React.FC<AlertProps> = ({ onContinue, onQuit }) => {
+const Alert: React.FC<AlertProps> = ({ onContinue, onQuit, colors }) => {
+  // Animation values
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0.8)).current;
+  const continueButtonScale = useRef(new Animated.Value(1)).current;
+  const quitButtonScale = useRef(new Animated.Value(1)).current;
+
+  // Entry animation
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.sequence([
+        Animated.timing(scaleAnim, {
+          toValue: 1.05,
+          duration: 200,
+          easing: Easing.out(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 1,
+          duration: 100,
+          useNativeDriver: true,
+        }),
+      ])
+    ]).start();
+  }, []);
+
+  // Exit with animation
+  const animateAndRun = (callback) => {
+    // Scale down button
+    Animated.sequence([
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleAnim, {
+        toValue: 0.8,
+        duration: 200,
+        useNativeDriver: true,
+      })
+    ]).start(() => {
+      if (callback) callback();
+    });
+  };
+
+  // Button press animations
+  const animateContinueButton = () => {
+    Animated.sequence([
+      Animated.timing(continueButtonScale, {
+        toValue: 0.95,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(continueButtonScale, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      })
+    ]).start(() => {
+      animateAndRun(onContinue);
+    });
+  };
+
+  const animateQuitButton = () => {
+    Animated.sequence([
+      Animated.timing(quitButtonScale, {
+        toValue: 0.95,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(quitButtonScale, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      })
+    ]).start(() => {
+      animateAndRun(onQuit);
+    });
+  };
+
   return (
     <Modal 
       visible={true} 
       transparent={true}
-      animationType="fade"
+      animationType="none"
     >
-      <View style={styles.alert}>
-        <View style={styles.frame}>
-          <View style={styles.titleAndDescription}>
-            <Text style={styles.areYouSure}>Are You Sure?</Text>
-            <Text style={styles.doYouReally}>Do you really want to give up?</Text>
+      <Animated.View 
+        style={[
+          styles.overlay,
+          { 
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            opacity: fadeAnim 
+          }
+        ]}
+      >
+        <Animated.View 
+          style={[
+            styles.alertContainer,
+            { 
+              backgroundColor: colors.background,
+              borderColor: colors.border,
+              transform: [{ scale: scaleAnim }]
+            }
+          ]}
+        >
+          <View style={styles.contentContainer}>
+            <Text style={[styles.title, { color: colors.textPrimary }]}>
+              Are You Sure?
+            </Text>
+            <Text style={[styles.message, { color: colors.textSecondary }]}>
+              Do you really want to give up?
+            </Text>
           </View>
-          <View style={styles.buttonParent}>
-            <TouchableOpacity 
-              style={[styles.button, styles.buttonBorder]}
-              onPress={onContinue}
+          
+          <View style={styles.buttonContainer}>
+            <Animated.View 
+              style={[
+                styles.buttonWrapper,
+                { transform: [{ scale: continueButtonScale }] }
+              ]}
             >
-              <Text style={[styles.title, styles.titlePosition]}>
-                I can do it
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={[styles.button, styles.buttonBorder]}
-              onPress={onQuit}
+              <TouchableOpacity
+                style={[
+                  styles.button,
+                  { borderColor: colors.border }
+                ]}
+                onPress={animateContinueButton}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.continueText, { color: colors.active }]}>
+                  I can do it
+                </Text>
+              </TouchableOpacity>
+            </Animated.View>
+            
+            <Animated.View 
+              style={[
+                styles.buttonWrapper,
+                { transform: [{ scale: quitButtonScale }] }
+              ]}
             >
-              <Text style={[styles.title1, styles.titlePosition]}>Yes</Text>
-            </TouchableOpacity>
+              <TouchableOpacity 
+                style={[
+                  styles.button,
+                  { borderColor: colors.border }
+                ]}
+                onPress={animateQuitButton}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.quitText, { color: colors.error }]}>
+                  Yes
+                </Text>
+              </TouchableOpacity>
+            </Animated.View>
           </View>
-        </View>
-      </View>
+        </Animated.View>
+      </Animated.View>
     </Modal>
   );
 };
 
+const { width } = Dimensions.get('window');
+const alertWidth = Math.min(300, width - 40);
+
 const styles = StyleSheet.create({
-  buttonBorder: {
-    borderColor: "rgba(84, 84, 88, 0.65)",
-    borderStyle: "solid",
-  },
-  titlePosition: {
-    lineHeight: 23,
-    marginTop: -11,
-    fontFamily: FontFamily.medium,
-    fontWeight: "500",
-    textAlign: "center",
-    fontSize: FontSize.large,
-    left: "50%",
-    top: "50%",
-    position: "absolute",
-  },
-  areYouSure: {
-    letterSpacing: -0.4,
-    fontWeight: "600",
-    fontFamily: FontFamily.semiBold,
-    textAlign: "center",
-    color: Color.textPrimary,
-    fontSize: FontSize.large,
-    alignSelf: "stretch",
-  },
-  doYouReally: {
-    fontSize: FontSize.small,
-    lineHeight: 15,
-    fontFamily: FontFamily.medium,
-    fontWeight: "500",
-    textAlign: "center",
-    color: Color.textPrimary,
-    alignSelf: "stretch",
-  },
-  titleAndDescription: {
-    width: 270,
-    paddingHorizontal: 16,
-    paddingBottom: 15,
-    gap: 8,
-    alignItems: "center",
-  },
-  title: {
-    marginLeft: -39,
-    color: Color.textPrimary,
-  },
-  button: {
-    borderTopWidth: 0.3,
-    height: 44,
+  overlay: {
     flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  title1: {
-    marginLeft: -15,
-    color: "#ff3b30", // System red color
-  },
-  buttonParent: {
-    flexDirection: "row",
-    alignSelf: "stretch",
-    gap: 2,
-  },
-  frame: {
-    marginTop: -61.5,
-    marginLeft: -134.5,
+  alertContainer: {
+    width: alertWidth,
     borderRadius: 14,
-    backgroundColor: Color.white,
-    borderColor: "rgba(105, 90, 86, 0.2)",
     borderWidth: 1,
-    justifyContent: "center",
-    paddingTop: 19,
-    gap: 2,
-    alignItems: "center",
-    borderStyle: "solid",
-    left: "50%",
-    top: "50%",
-    position: "absolute",
+    overflow: 'hidden',
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
   },
-  alert: {
-    backgroundColor: "rgba(0, 0, 0, 0.3)",
-    width: "100%",
-    height: "100%",
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+  contentContainer: {
+    padding: 20,
+    alignItems: 'center',
   },
+  title: {
+    fontFamily: FontFamily.semiBold,
+    fontSize: FontSize.large,
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  message: {
+    fontFamily: FontFamily.regular,
+    fontSize: FontSize.small,
+    textAlign: 'center',
+    paddingHorizontal: 10,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    borderTopWidth: 1,
+  },
+  buttonWrapper: {
+    flex: 1,
+  },
+  button: {
+    height: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderLeftWidth: 0.5,
+    borderRightWidth: 0.5,
+  },
+  continueText: {
+    fontFamily: FontFamily.medium,
+    fontSize: FontSize.medium,
+    textAlign: 'center',
+  },
+  quitText: {
+    fontFamily: FontFamily.medium, 
+    fontSize: FontSize.medium,
+    textAlign: 'center',
+  }
 });
 
 export default Alert;

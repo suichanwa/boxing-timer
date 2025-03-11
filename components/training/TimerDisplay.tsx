@@ -6,18 +6,23 @@ interface TimerDisplayProps {
   minutes: number;
   seconds: number;
   timerScale: Animated.Value;
+  color?: string;
 }
 
 const TimerDisplay: React.FC<TimerDisplayProps> = ({ 
   minutes, 
   seconds, 
-  timerScale 
+  timerScale,
+  color = "#202020" 
 }) => {
   return (
     <Animated.Text 
       style={[
         styles.timerText,
-        { transform: [{ scale: timerScale }] }
+        { 
+          transform: [{ scale: timerScale }],
+          color
+        }
       ]}
     >
       {`${minutes.toString().padStart(2, '0')}\n${seconds.toString().padStart(2, '0')}`}
@@ -29,7 +34,6 @@ const styles = StyleSheet.create({
   timerText: {
     fontSize: 180,
     fontFamily: FontFamily.semiBold,
-    color: "#202020",
     textAlign: "center",
     lineHeight: 180,
   },

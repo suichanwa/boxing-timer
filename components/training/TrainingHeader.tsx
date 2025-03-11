@@ -1,29 +1,31 @@
 import React from "react";
 import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
-import { FontFamily, FontSize, Color, Padding } from "../../styles/GlobalStyles";
+import { FontFamily, FontSize, Padding } from "../../styles/GlobalStyles";
 
 interface TrainingHeaderProps {
   onBackPress: () => void;
   title?: string;
+  colors: any; // Theme colors
 }
 
 const TrainingHeader: React.FC<TrainingHeaderProps> = ({ 
   onBackPress, 
-  title = "Training" 
+  title = "Training",
+  colors
 }) => {
   return (
-    <View style={styles.headerNavigation}>
-      <View style={styles.navigationBar}>
+    <View style={[styles.headerNavigation, { backgroundColor: colors.background }]}>
+      <View style={[styles.navigationBar, { borderBottomColor: colors.border, borderBottomWidth: 1 }]}>
         <TouchableOpacity 
           style={styles.leadingIcon} 
           onPress={onBackPress}
         >
           <View style={styles.arrowBack}>
-            <View style={styles.arrowLine} />
-            <View style={styles.arrowHead} />
+            <View style={[styles.arrowLine, { backgroundColor: colors.active }]} />
+            <View style={[styles.arrowHead, { borderColor: colors.active }]} />
           </View>
         </TouchableOpacity>
-        <Text style={styles.titleText} numberOfLines={1}>{title}</Text>
+        <Text style={[styles.titleText, { color: colors.textPrimary }]} numberOfLines={1}>{title}</Text>
         <View style={styles.trailingIcon} />
       </View>
     </View>
@@ -32,7 +34,7 @@ const TrainingHeader: React.FC<TrainingHeaderProps> = ({
 
 const styles = StyleSheet.create({
   headerNavigation: {
-    backgroundColor: Color.white,
+    width: '100%',
   },
   navigationBar: {
     height: 56,
@@ -55,7 +57,6 @@ const styles = StyleSheet.create({
   arrowLine: {
     width: 18,
     height: 2,
-    backgroundColor: Color.active,
     position: 'absolute',
     left: 2,
   },
@@ -64,7 +65,6 @@ const styles = StyleSheet.create({
     height: 10,
     borderLeftWidth: 2,
     borderBottomWidth: 2,
-    borderColor: Color.active,
     transform: [{ rotate: '45deg' }],
     position: 'absolute',
     left: 2,
@@ -72,7 +72,6 @@ const styles = StyleSheet.create({
   titleText: {
     fontFamily: FontFamily.semiBold,
     fontSize: FontSize.large,
-    color: Color.textPrimary,
     textAlign: "center",
     flex: 1,
   },

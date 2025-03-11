@@ -1,35 +1,37 @@
 import React from "react";
 import { StyleSheet, View, TouchableOpacity } from "react-native";
-import { Color, BorderRadius } from "../../styles/GlobalStyles";
+import { BorderRadius } from "../../styles/GlobalStyles";
 
 interface ControlPanelProps {
   isRunning: boolean;
   onPauseResume: () => void;
   onStop: () => void;
   onSkip: () => void;
+  colors: any; // Theme colors
 }
 
 const ControlPanel: React.FC<ControlPanelProps> = ({
   isRunning,
   onPauseResume,
   onStop,
-  onSkip
+  onSkip,
+  colors
 }) => {
   return (
     <View style={styles.controlsContainer}>
       {/* Stop button */}
       <TouchableOpacity 
-        style={styles.controlButton}
+        style={[styles.controlButton, { backgroundColor: colors.surfaceVariant }]}
         onPress={onStop}
       >
         <View style={styles.buttonInner}>
-          <View style={styles.stopIcon} />
+          <View style={[styles.stopIcon, { backgroundColor: colors.textPrimary }]} />
         </View>
       </TouchableOpacity>
 
       {/* Play/Pause button */}
       <TouchableOpacity 
-        style={styles.playPauseButton}
+        style={[styles.playPauseButton, { backgroundColor: isRunning ? colors.error : colors.success }]}
         onPress={onPauseResume}
       >
         {isRunning ? (
@@ -44,12 +46,12 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
 
       {/* Skip button */}
       <TouchableOpacity 
-        style={styles.controlButton}
+        style={[styles.controlButton, { backgroundColor: colors.surfaceVariant }]}
         onPress={onSkip}
       >
         <View style={styles.skipIcon}>
-          <View style={styles.skipBar} />
-          <View style={styles.skipTriangle} />
+          <View style={[styles.skipBar, { backgroundColor: colors.textPrimary }]} />
+          <View style={[styles.skipTriangle, { borderRightColor: colors.textPrimary }]} />
         </View>
       </TouchableOpacity>
     </View>
@@ -67,7 +69,6 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 24,
-    backgroundColor: Color.background,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -80,14 +81,12 @@ const styles = StyleSheet.create({
   stopIcon: {
     width: 24,
     height: 24,
-    backgroundColor: "#202020",
     borderRadius: 4,
   },
   playPauseButton: {
     width: 128,
     height: 96,
     borderRadius: 32,
-    backgroundColor: "#db3c3c",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -102,7 +101,7 @@ const styles = StyleSheet.create({
     width: 12,
     height: 32,
     borderRadius: 4,
-    backgroundColor: Color.white,
+    backgroundColor: "#FFFFFF",
     marginHorizontal: 4,
   },
   playIcon: {
@@ -114,7 +113,7 @@ const styles = StyleSheet.create({
     borderRightWidth: 0,
     borderBottomWidth: 24,
     borderTopWidth: 24,
-    borderLeftColor: Color.white,
+    borderLeftColor: "#FFFFFF",
     borderRightColor: "transparent",
     borderBottomColor: "transparent",
     borderTopColor: "transparent",
@@ -130,7 +129,6 @@ const styles = StyleSheet.create({
     right: 8,
     width: 4,
     height: 24,
-    backgroundColor: "#202020",
     borderRadius: 2,
   },
   skipTriangle: {
@@ -145,7 +143,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: 12,
     borderTopWidth: 12,
     borderLeftColor: "transparent",
-    borderRightColor: "#202020",
     borderBottomColor: "transparent",
     borderTopColor: "transparent",
   },
