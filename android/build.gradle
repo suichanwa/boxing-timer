@@ -2,15 +2,13 @@
 
 buildscript {
     ext {
-        // Updated to more stable versions compatible with Java 19
-        buildToolsVersion = findProperty('android.buildToolsVersion') ?: '33.0.2'
+        buildToolsVersion = findProperty('android.buildToolsVersion') ?: '35.0.0'
         minSdkVersion = Integer.parseInt(findProperty('android.minSdkVersion') ?: '24')
-        compileSdkVersion = Integer.parseInt(findProperty('android.compileSdkVersion') ?: '33')
-        targetSdkVersion = Integer.parseInt(findProperty('android.targetSdkVersion') ?: '33')
-        kotlinVersion = findProperty('android.kotlinVersion') ?: '1.8.10'
+        compileSdkVersion = Integer.parseInt(findProperty('android.compileSdkVersion') ?: '35')
+        targetSdkVersion = Integer.parseInt(findProperty('android.targetSdkVersion') ?: '34')
+        kotlinVersion = findProperty('android.kotlinVersion') ?: '1.9.25'
 
-        // Use an older NDK version that's compatible with Java 19
-        ndkVersion = "25.1.8937393"
+        ndkVersion = "26.1.10909125"
     }
     repositories {
         google()

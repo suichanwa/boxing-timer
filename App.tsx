@@ -1,11 +1,17 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useFonts } from "expo-font";
 import { StatusBar } from "expo-status-bar";
-
-// Import ThemeProvider
+import { enableScreens } from 'react-native-screens';
+import { LogBox } from 'react-native';
 import { ThemeProvider, ThemeContext } from "./src/context/ThemeContext";
+
+LogBox.ignoreLogs([
+  'Unable to find viewstate for tag', // Ignore viewstate tag errors
+]);
+
+enableScreens();
 
 // Import screens
 import Frame from "./src/screens/Frame";
@@ -24,6 +30,16 @@ const ThemedApp = () => {
   
   // Get the current theme
   const { isDark } = React.useContext(ThemeContext);
+
+  // Fix for potential screen rendering issues
+  useEffect(() => {
+    // Short delay to ensure the app is fully initialized
+    const timer = setTimeout(() => {
+      setHideSplashScreen(true);
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <>
