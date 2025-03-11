@@ -5,7 +5,6 @@ export const useButtonAnimation = (rotationDegrees = 180) => {
   const buttonScale = useRef(new Animated.Value(1)).current;
   const buttonRotate = useRef(new Animated.Value(0)).current;
   
-  // Convert rotation value to degrees for transform
   const rotation = buttonRotate.interpolate({
     inputRange: [0, 1],
     outputRange: ['0deg', `${rotationDegrees}deg`]
