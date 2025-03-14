@@ -6,7 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -29,8 +29,6 @@
       "eas": {
         "projectId": "1c0ec167-29f6-4a3e-a47b-77311247aa64"
       }
-    },
-    "plugins": [
-    ]
+    }
   }
 }

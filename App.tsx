@@ -1,123 +1,103 @@
-import React, { useState, useEffect } from "react";
-import { NavigationContainer } from "@react-navigation/native";
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { useFonts } from "expo-font";
-import { StatusBar } from "expo-status-bar";
-import { enableScreens } from 'react-native-screens';
-import { LogBox } from 'react-native';
-import { ThemeProvider, ThemeContext } from "./src/context/ThemeContext";
+// Import gesture handler at the very top
+import 'react-native-gesture-handler';
 
-LogBox.ignoreLogs([
-  'Unable to find viewstate for tag', // Ignore viewstate tag errors
-]);
+// React core imports
+import React, { useState, useEffect } from 'react';
+import { LogBox, StatusBar, View } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
-enableScreens();
+// Navigation imports 
+import { NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
+import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold } from '@expo-google-fonts/inter';
+import * as SplashScreen from 'expo-splash-screen';
+
+// Import theme provider
+import { ThemeProvider } from './src/context/ThemeContext';
 
 // Import screens
-import Frame from "./src/screens/Frame";
-import HomeScreen from "./src/screens/HomeScreen";
-import TrainingScreen from "./src/screens/TrainingScreen";
-import WorkoutSettings from "./src/screens/WorkoutSettings";
-import SettingsScreen from "./src/screens/SettingsScreen";
-// Ensure this import path is correct
-import LanguageScreen from "./src/screens/LanguageScreen";
+import HomeScreen from './src/screens/HomeScreen';
+import TrainingScreen from './src/screens/TrainingScreen';
+import WorkoutSettings from './src/screens/WorkoutSettings';
+import SettingsScreen from './src/screens/SettingsScreen';
+import LanguageScreen from './src/screens/LanguageScreen';
+import Frame from './src/screens/Frame';
 
-const Stack = createNativeStackNavigator();
+// Create navigation stack
+const Stack = createStackNavigator();
 
-// Create a themed navigation container component
-const ThemedApp = () => {
-  const [hideSplashScreen, setHideSplashScreen] = useState(true);
-  
-  // Get the current theme
-  const { isDark } = React.useContext(ThemeContext);
+// Ignore specific warnings
+LogBox.ignoreLogs([
+  'Non-serializable values were found in the navigation state',
+  'ViewPropTypes will be removed from React Native',
+  'Screen native module hasn\'t been linked',
+  'TurboModuleRegistry.getEnforcing',
+  'react-native-gesture-handler module was not found'
+]);
 
-  // Fix for potential screen rendering issues
-  useEffect(() => {
-    // Short delay to ensure the app is fully initialized
-    const timer = setTimeout(() => {
-      setHideSplashScreen(true);
-    }, 100);
-    
-    return () => clearTimeout(timer);
-  }, []);
+// Keep splash screen visible while loading fonts
+SplashScreen.preventAutoHideAsync();
 
-  return (
-    <>
-      <NavigationContainer>
-        {hideSplashScreen ? (
-          <Stack.Navigator 
-            screenOptions={{ headerShown: false }}
-            initialRouteName="Frame"
-          >
-            {/* Start with Frame as the initial screen */}
-            <Stack.Screen
-              name="Frame"
-              component={Frame}
-              options={{ headerShown: false }}
-            />
-            {/* Workout Settings screen */}
-            <Stack.Screen
-              name="WorkoutSettings"
-              component={WorkoutSettings}
-              options={{ headerShown: false }}
-            />
-            {/* Settings screen */}
-            <Stack.Screen
-              name="Settings"
-              component={SettingsScreen}
-              options={{ headerShown: false }}
-            />
-            {/* Language selection screen - ensure name is exactly "Language" */}
-            <Stack.Screen
-              name="Language"
-              component={LanguageScreen}
-              options={{ headerShown: false }}
-            />
-            {/* Timer settings screen */}
-            <Stack.Screen
-              name="Home"
-              component={HomeScreen}
-              options={{ headerShown: false }}
-            />
-            {/* Active training screen */}
-            <Stack.Screen
-              name="Training"
-              component={TrainingScreen}
-              options={{ headerShown: false }}
-            />
-          </Stack.Navigator>
-        ) : null}
-      </NavigationContainer>
-      
-      {/* Status bar adapts to theme */}
-      <StatusBar style={isDark ? "light" : "dark"} />
-    </>
-  );
-};
-
-// Make sure to verify that the LanguageScreen component exists
-// and is properly exported from its file
 export default function App() {
-  const [fontsLoaded, error] = useFonts({
-    "PublicSans-Medium": require("./assets/fonts/PublicSans-Medium.ttf"),
-    "PublicSans-SemiBold": require("./assets/fonts/PublicSans-SemiBold.ttf"),
-    "PublicSans-Bold": require("./assets/fonts/PublicSans-Bold.ttf"),
-    "PublicSans-Regular": require("./assets/fonts/PublicSans-Regular.ttf"),
-    "Inter-SemiBold": require("./assets/fonts/Inter_28pt-SemiBold.ttf"),
-    "Inter-Regular": require("./assets/fonts/Inter_28pt-Regular.ttf"),
-    // Add DMSans font - you'll need to download this font
-    "DMSans-Regular": require("./assets/fonts/PublicSans-Regular.ttf"), // Temporarily using PublicSans as fallback
-    "DMSans-Bold": require("./assets/fonts/PublicSans-Bold.ttf"), // Temporarily using PublicSans as fallback
+  // Loading state for screens initialization
+  const [isReady, setIsReady] = useState(false);
+  
+  // Load fonts
+  const [fontsLoaded] = useFonts({
+    'Inter-Regular': Inter_400Regular,
+    'Inter-Medium': Inter_500Medium,
+    'Inter-SemiBold': Inter_600SemiBold,
+    'Inter-Bold': Inter_700Bold,
   });
 
-  if (!fontsLoaded && !error) {
+  // Setup effect for initializing
+  useEffect(() => {
+    async function prepare() {
+      try {
+        // Pre-load/initialize anything else required here
+        setTimeout(() => {
+          setIsReady(true);
+        }, 100);
+      } catch (e) {
+        console.warn('Error loading app:', e);
+      }
+    }
+    prepare();
+  }, []);
+  
+  // Hide splash screen when fonts are loaded and app is ready
+  useEffect(() => {
+    if (fontsLoaded && isReady) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded, isReady]);
+
+  if (!fontsLoaded || !isReady) {
     return null;
   }
 
-  // Wrap the entire app with ThemeProvider
   return (
-    <ThemeProvider>
-      <ThemedApp />
-    </ThemeProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <ThemeProvider>
+        <StatusBar />
+        <NavigationContainer>
+          <Stack.Navigator 
+            initialRouteName="Home"
+            screenOptions={{
+              headerShown: false,
+              cardStyle: { backgroundColor: 'transparent' },
+              gestureEnabled: false
+            }}
+          >
+            <Stack.Screen name="Home" component={HomeScreen} />
+            <Stack.Screen name="Training" component={TrainingScreen} />
+            <Stack.Screen name="WorkoutSettings" component={WorkoutSettings} />
+            <Stack.Screen name="Settings" component={SettingsScreen} />
+            <Stack.Screen name="Language" component={LanguageScreen} />
+            <Stack.Screen name="Frame" component={Frame} />
+          </Stack.Navigator>
+        </NavigationContainer>
+      </ThemeProvider>
+    </GestureHandlerRootView>
   );
 }
